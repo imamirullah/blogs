@@ -1,0 +1,9 @@
+# Dependency directories
+node_modules/
+
+# Env files
+.env
+
+# Uploads directory - ignore images but track directory structure via .gitkeep
+uploads/*
+!uploads/.gitkeep
