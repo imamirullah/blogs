@@ -1,0 +1,15 @@
+{
+  "name": "blogs-server",
+  "version": "1.0.0",
+  "description": "Backend server for blogs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "mongoose": "^9.7.2",
+    "multer": "^2.2.0"
+  }
+}
