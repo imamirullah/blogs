@@ -1,11 +1,15 @@
-const express = require("express");
+ const express = require("express");
 const mongoose = require("mongoose");
 const path = require("path");
 const cors = require("cors");
 const multer = require("multer");
 const fs = require("fs");
-
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const app = express();
+ 
+
+ 
 const PORT = 5000;
 
 /* =========================
@@ -26,12 +30,12 @@ app.use(express.static(__dirname));
 /* =========================
 UPLOADS FOLDER
 ========================= */
-
-if (!fs.existsSync("uploads")) {
-fs.mkdirSync("uploads");
-}
-
-app.use("/uploads", express.static("uploads"));
+cloudinary.config({
+  cloud_name: "dd9b3idm4",
+  api_key: "597655132691268",
+  api_secret: "K8NiRj5VL9XDsgyV54mLbJwBrk0"
+});
+ 
 
 /* =========================
 MONGODB
@@ -88,8 +92,8 @@ content: {
 },
 
 image: {
-    type: String,
-    default: null
+  type: String,
+  default: ""
 },
 
 createdAt: {
@@ -106,27 +110,17 @@ const Blog = mongoose.model("Blog", blogSchema);
 MULTER
 ========================= */
 
-const storage = multer.diskStorage({
-
-
-destination: (req, file, cb) => {
-    cb(null, "uploads/");
-},
-
-filename: (req, file, cb) => {
-
-    const uniqueName =
-        Date.now() +
-        "-" +
-        file.originalname.replace(/\s+/g, "-");
-
-    cb(null, uniqueName);
-}
-
-
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: "blogs",
+        allowed_formats: ["jpg", "jpeg", "png", "webp"]
+    }
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage: storage
+});
 
 /* =========================
 HOME
@@ -174,9 +168,7 @@ const blog = new Blog({
     author: req.body.author,
     category: req.body.category,
     content: req.body.content,
-    image: req.file
-        ? req.file.filename
-        : null
+    image: req.file ? req.file.path : ""
 });
 
         await blog.save();
@@ -373,8 +365,7 @@ const updateData = {
 
             }
 
-            updateData.image =
-                req.file.filename;
+           updateData.image = req.file.path;
 
         }
 
@@ -433,26 +424,19 @@ async (req, res) => {
 
         }
 
-        if (blog.image) {
+      if (blog.image) {
 
-            const imagePath =
-                path.join(
-                    __dirname,
-                    "uploads",
-                    blog.image
-                );
+    const parts = blog.image.split("/");
 
-            if (
-                fs.existsSync(
-                    imagePath
-                )
-            ) {
-                fs.unlinkSync(
-                    imagePath
-                );
-            }
+    const file = parts[parts.length - 1];
 
-        }
+    const publicId =
+        "blogs/" +
+        file.substring(0, file.lastIndexOf("."));
+
+    await cloudinary.uploader.destroy(publicId);
+
+}
 
         await Blog.findByIdAndDelete(
             req.params.id
